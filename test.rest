@@ -1,0 +1,80 @@
+@baseUrl = http://localhost:8080
+
+### Register
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "name": "Arzif",
+  "email": "arzif@test.com",
+  "password": "password123"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "arzif@test.com",
+  "password": "password123"
+}
+
+@token = {{login.response.body.$.token}}
+
+### Get Profile
+GET {{baseUrl}}/profile
+Authorization: Bearer {{token}}
+
+### Get All Users
+GET {{baseUrl}}/users
+
+### Get User By ID
+GET {{baseUrl}}/users/1
+
+### Create User
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "User Baru",
+  "email": "userbaru@test.com",
+  "password": "password123"
+}
+
+### Update User
+PUT {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Arzif Update",
+  "email": "arzifupdate@test.com",
+  "password": "password123"
+}
+
+### Get All Posts
+GET {{baseUrl}}/posts
+
+### Get Post By ID
+GET {{baseUrl}}/posts/1
+
+### Create Post
+POST {{baseUrl}}/posts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Belajar Go API",
+  "body": "Go sangat cepat dan efisien",
+  "user_id": 1
+}
+
+### Delete Post
+DELETE {{baseUrl}}/posts/1
+Authorization: Bearer {{token}}
+
+### Delete User
+DELETE {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
