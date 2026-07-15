@@ -2,8 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"log"
-	"fmt"     
+	"log" 
 	"os" 
 
 	_ "github.com/lib/pq"
@@ -14,46 +13,29 @@ var db *sql.DB
 
 func initDB() {
 	var err error
-	host := os.Getenv("DB_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-	port := os.Getenv("DB_PORT")
-	if port == "" {
-		port = "5432"
-	}
-	user := os.Getenv("DB_USER")
-	if user == "" {
-		user = "postgres"
-	}
-	password := os.Getenv("DB_PASSWORD")
-	if password == "" {
-		password = "zifa05"
-	}
-	dbname := os.Getenv("DB_NAME")
-	if dbname == "" {
-		dbname = "user_post_api"
-	}
-	sslmode := os.Getenv("DB_SSLMODE")
-	if sslmode == "" {
-		sslmode = "disable"
+	
+	// Read DATABASE_URL dari environment
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgres://postgres:password@localhost:5432/user_post_api?sslmode=disable"
 	}
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode)
-
-	log.Printf("🔗 Connecting to DB: host=%s port=%s dbname=%s", host, port, dbname)
-
-	db, err = sql.Open("postgres", dsn)
+	db, err = sql.Open("postgres", databaseURL)
 	if err != nil {
 		log.Fatal("Failed to open database:", err)
 	}
-	if err = db.Ping(); err != nil {
+
+	err = db.Ping()
+	if err != nil {
 		log.Fatal("Failed to connect:", err)
 	}
+
 	log.Println("✅ PostgreSQL connected")
 	createTables()
+	log.Println("✅ Database tables created/verified")
 }
+
+// Rest of database.go stays same...
 
 func createTables() {
 	queries := []string{
