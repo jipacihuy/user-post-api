@@ -272,3 +272,4 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 	}
 	respondSuccess(w, http.StatusOK, map[string]string{"message": "post deleted"})
 }
+
