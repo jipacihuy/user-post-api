@@ -14,7 +14,6 @@ var db *sql.DB
 
 func initDB() {
 	var err error
-	// Ambil dari environment variables (Railway bakal kasih ini otomatis)
 	host := os.Getenv("DB_HOST")
 	if host == "" {
 		host = "localhost"
@@ -35,9 +34,15 @@ func initDB() {
 	if dbname == "" {
 		dbname = "user_post_api"
 	}
+	sslmode := os.Getenv("DB_SSLMODE")
+	if sslmode == "" {
+		sslmode = "disable"
+	}
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode)
+
+	log.Printf("🔗 Connecting to DB: host=%s port=%s dbname=%s", host, port, dbname)
 
 	db, err = sql.Open("postgres", dsn)
 	if err != nil {
