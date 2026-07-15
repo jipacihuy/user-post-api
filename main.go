@@ -16,6 +16,7 @@ func main() {
 	// Routes...
 	router.HandleFunc("/register", Register).Methods("POST")
 	router.HandleFunc("/login", Login).Methods("POST")
+	router.HandleFunc("/profile", authMiddleware(GetProfile)).Methods("GET")
 	// ... rest of routes
 
 	port := os.Getenv("PORT")
