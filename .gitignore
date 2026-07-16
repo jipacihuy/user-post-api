@@ -1,2 +1,66 @@
 .env
 *.env
+# ===== Go =====
+# Binary dan file hasil build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+user-post-api
+user-post-api.exe
+
+# Dependency vendor
+/vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+# ===== Environment Variables =====
+# File .env (jangan pernah commit!)
+.env
+*.env
+.env.local
+.env.*.local
+
+# ===== IDE / Editor =====
+# VSCode
+.vscode/
+*.code-workspace
+
+# IntelliJ / Goland
+.idea/
+*.iml
+
+# ===== OS Generated =====
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Linux
+.directory
+
+# ===== Logs =====
+*.log
+logs/
+error.log
+access.log
+
+# ===== Temporary Files =====
+tmp/
+temp/
+*.tmp
+
+# ===== Docker =====
+# Jangan ignore Dockerfile atau docker-compose.yml
+# Tapi ignore file sementara
+.dockerignore

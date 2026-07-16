@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+	"fmt"
+	"log"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -123,12 +126,26 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 // ===== USER HANDLERS =====
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := getAllUsers()
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondSuccess(w, http.StatusOK, users)
+    cacheKey := "users:all"
+
+    var users []User
+    err := GetCache(cacheKey, &users)
+    if err == nil {
+        log.Println("✅ Cache HIT for users:all")
+        respondSuccess(w, http.StatusOK, users) // <-- PAKAI respondSuccess!
+        return
+    }
+
+    log.Println("❌ Cache MISS for users:all")
+
+    users, err = getAllUsers()
+    if err != nil {
+        respondError(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+
+    _ = SetCache(cacheKey, users, 5*time.Minute)
+    respondSuccess(w, http.StatusOK, users)
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -137,40 +154,58 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
 	validate := validator.New()
 	if err := validate.Struct(user); err != nil {
 		errors := err.(validator.ValidationErrors)
 		respondError(w, http.StatusBadRequest, errors[0].Translate(nil))
 		return
 	}
-	if user.Username == "" || user.Email == "" || user.Password == "" {
-		respondError(w, http.StatusBadRequest, "username, email, password required")
-		return
-	}
+
 	id, err := CreateUser(user)
 	if err != nil {
 		respondError(w, http.StatusConflict, "email already exists or failed to create user")
 		return
 	}
+
+	// Hapus cache users
+	_ = DeleteCache("users:*")
+
 	user.ID = id
 	user.Password = ""
 	respondSuccess(w, http.StatusCreated, user)
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "invalid ID")
-		return
-	}
-	user, err := getUserByID(id)
-	if err != nil {
-		respondError(w, http.StatusNotFound, "user not found")
-		return
-	}
-	user.Password = ""
-	respondSuccess(w, http.StatusOK, user)
+    vars := mux.Vars(r)
+    id, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        respondError(w, http.StatusBadRequest, "invalid ID")
+        return
+    }
+
+    cacheKey := fmt.Sprintf("user:%d", id)
+
+    var user User
+    err = GetCache(cacheKey, &user)
+    if err == nil {
+        log.Printf("✅ Cache HIT for user:%d", id)
+        user.Password = ""
+        respondSuccess(w, http.StatusOK, user) // <-- PAKAI respondSuccess!
+        return
+    }
+
+    log.Printf("❌ Cache MISS for user:%d", id)
+
+    user, err = getUserByID(id)
+    if err != nil {
+        respondError(w, http.StatusNotFound, "user not found")
+        return
+    }
+
+    _ = SetCache(cacheKey, user, 10*time.Minute)
+    user.Password = ""
+    respondSuccess(w, http.StatusOK, user)
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -180,15 +215,22 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid ID")
 		return
 	}
+
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
 	if err := updateUserDB(id, user); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to update user")
 		return
 	}
+
+	// Hapus cache users dan user detail
+	_ = DeleteCache("users:*")
+	_ = DeleteCache(fmt.Sprintf("user:%d", id))
+
 	user.ID = id
 	user.Password = ""
 	respondSuccess(w, http.StatusOK, user)
@@ -201,21 +243,38 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid ID")
 		return
 	}
+
 	if err := deleteUserDB(id); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to delete user")
 		return
 	}
+
+	// Hapus cache users dan user detail
+	_ = DeleteCache("users:*")
+	_ = DeleteCache(fmt.Sprintf("user:%d", id))
+
 	respondSuccess(w, http.StatusOK, map[string]string{"message": "user deleted"})
 }
 
 // ===== POST HANDLERS =====
 
 func GetPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := getAllPosts()
+	cacheKey := "posts:all"
+
+	var posts []Post
+	err := GetCache(cacheKey, &posts)
+	if err == nil {
+		respondSuccess(w, http.StatusOK, posts)
+		return
+	}
+
+	posts, err = getAllPosts()
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	_ = SetCache(cacheKey, posts, 5*time.Minute)
 	respondSuccess(w, http.StatusOK, posts)
 }
 
@@ -225,21 +284,23 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
 	validate := validator.New()
 	if err := validate.Struct(post); err != nil {
 		errors := err.(validator.ValidationErrors)
 		respondError(w, http.StatusBadRequest, errors[0].Translate(nil))
 		return
 	}
-	if post.Title == "" || post.Content == "" || post.UserID == 0 {
-		respondError(w, http.StatusBadRequest, "title, content, user_id required")
-		return
-	}
+
 	id, err := createPostDB(post)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to create post")
 		return
 	}
+
+	// Hapus cache posts
+	_ = DeleteCache("posts:*")
+
 	post.ID = id
 	respondSuccess(w, http.StatusCreated, post)
 }
@@ -251,11 +312,23 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid ID")
 		return
 	}
-	post, err := getPostByID(id)
+
+	cacheKey := fmt.Sprintf("post:%d", id)
+
+	var post Post
+	err = GetCache(cacheKey, &post)
+	if err == nil {
+		respondSuccess(w, http.StatusOK, post)
+		return
+	}
+
+	post, err = getPostByID(id)
 	if err != nil {
 		respondError(w, http.StatusNotFound, "post not found")
 		return
 	}
+
+	_ = SetCache(cacheKey, post, 10*time.Minute)
 	respondSuccess(w, http.StatusOK, post)
 }
 
@@ -266,10 +339,16 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "invalid ID")
 		return
 	}
+
 	if err := deletePostDB(id); err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to delete post")
 		return
 	}
+
+	// Hapus cache posts dan post detail
+	_ = DeleteCache("posts:*")
+	_ = DeleteCache(fmt.Sprintf("post:%d", id))
+
 	respondSuccess(w, http.StatusOK, map[string]string{"message": "post deleted"})
 }
 

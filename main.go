@@ -10,6 +10,7 @@ import (
 
 func main() {
 	initDB()
+	InitRedis()
 
 	router := mux.NewRouter()
 

@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"log" 
 	"os" 
+	"context"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/redis/go-redis/v9"
 )
 
 var db *sql.DB
@@ -15,9 +17,10 @@ func initDB() {
 	var err error
 	
 	// Read DATABASE_URL dari environment
-	databaseURL := os.Getenv("DATABASE_URL")
+		databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		databaseURL = "postgres://postgres:password@localhost:5432/user_post_api?sslmode=disable"
+		// Ini hanya untuk local development
+		databaseURL = "postgres://postgres:zifa05@localhost:5432/user_post_api?sslmode=disable"
 	}
 
 	db, err = sql.Open("postgres", databaseURL)
@@ -33,6 +36,21 @@ func initDB() {
 	log.Println("✅ PostgreSQL connected")
 	createTables()
 	log.Println("✅ Database tables created/verified")
+}
+func initRedis() {
+	// Optional: Redis not required
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "127.0.0.1:6379",
+	})
+	
+	_, err := redisClient.Ping(context.Background()).Result()
+	if err != nil {
+		log.Println("⚠️ Redis not available, continuing without cache")
+		// Continue tanpa Redis
+		return
+	}
+	
+	log.Println("✅ Redis connected")
 }
 
 // Rest of database.go stays same...

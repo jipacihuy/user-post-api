@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: user-post-api-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: zifa05
+      POSTGRES_DB: user_post_api
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:                                       
+    image: redis:alpine
+    container_name: user-post-api-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: user-post-api-go
+    environment:
+      DATABASE_URL: "postgres://postgres:zifa05@postgres:5432/user_post_api?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"          
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:                                     
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
