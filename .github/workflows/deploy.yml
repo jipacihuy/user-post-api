@@ -2,7 +2,7 @@ name: Deploy to Railway
 
 on:
   push:
-    branches: [ main ] 
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -20,14 +20,15 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
-      #- name: Run tests
-      #  run: go test -v ./...
-
-      - name: Build binary (optional, just for testing)
+      - name: Build binary
         run: go build -o user-post-api .
 
       - name: Install Railway CLI
-        run: curl -fsSL https://railway.app/install.sh | sh
+        run: |
+          curl -L https://github.com/railwayapp/cli/releases/latest/download/railway_linux_amd64.tar.gz -o railway.tar.gz
+          tar -xzf railway.tar.gz
+          chmod +x railway
+          sudo mv railway /usr/local/bin/
 
       - name: Deploy to Railway
         run: railway up
