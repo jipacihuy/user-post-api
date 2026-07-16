@@ -2,7 +2,7 @@ name: Deploy to Railway
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # atau [ master ] kalau branch kamu master
 
 jobs:
   deploy:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.26.5'
+          go-version: '1.22'
 
       - name: Download dependencies
         run: go mod download
@@ -23,11 +23,13 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-      - name: Build binary
+      - name: Build binary (optional, just for testing)
         run: go build -o user-post-api .
 
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+
       - name: Deploy to Railway
-        uses: bervProject/railway-deploy@v1
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: user-post-api
+        run: railway up
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
