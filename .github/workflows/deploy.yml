@@ -25,10 +25,15 @@ jobs:
 
       - name: Install Railway CLI
         run: |
-          curl -L https://github.com/railwayapp/cli/releases/latest/download/railway_linux_amd64.tar.gz -o railway.tar.gz
+          set -e
+          # Ambil URL download asset terbaru
+          DOWNLOAD_URL=$(curl -s https://api.github.com/repos/railwayapp/cli/releases/latest | grep -oP '"browser_download_url":\s*"\K[^"]+linux_amd64\.tar\.gz')
+          echo "Downloading from: $DOWNLOAD_URL"
+          curl -L "$DOWNLOAD_URL" -o railway.tar.gz
           tar -xzf railway.tar.gz
           chmod +x railway
           sudo mv railway /usr/local/bin/
+          railway --version
 
       - name: Deploy to Railway
         run: railway up
