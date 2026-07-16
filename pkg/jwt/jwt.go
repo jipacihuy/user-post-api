@@ -1,29 +1,36 @@
-package main
+package jwt
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("your-secret-key") // Ganti dengan secret yang aman di production
+var secret = []byte(os.Getenv("JWT_SECRET"))
 
-func generateToken(userID int) (string, error) {
+func init() {
+	if len(secret) == 0 {
+		secret = []byte("default-secret-change-me")
+	}
+}
+
+func GenerateToken(userID int) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(secret)
 }
 
-func verifyToken(tokenString string) (int, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+func VerifyToken(tokenString string) (int, error) {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return jwtSecret, nil
+		return secret, nil
 	})
 	if err != nil {
 		return 0, err

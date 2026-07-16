@@ -1,5 +1,3 @@
-.env
-*.env
 # ===== Go =====
 # Binary dan file hasil build
 *.exe
@@ -60,7 +58,6 @@ tmp/
 temp/
 *.tmp
 
-# ===== Docker =====
-# Jangan ignore Dockerfile atau docker-compose.yml
-# Tapi ignore file sementara
-.dockerignore
+# ===== Build Output =====
+/dist/
+/build/

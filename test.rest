@@ -5,9 +5,9 @@ POST {{baseUrl}}/register
 Content-Type: application/json
 
 {
-  "name": "Arzif",
-  "email": "arzif@test.com",
-  "password": "password123"
+  "username": "elpstein",
+  "email": "alawanjir@test.com",
+  "password": "woykocakjir"
 }
 
 ### Login
@@ -16,8 +16,8 @@ POST {{baseUrl}}/login
 Content-Type: application/json
 
 {
-  "email": "arzif@test.com",
-  "password": "password123"
+  "email": "alawanjir@test.com",
+  "password": "woykocakjir"
 }
 
 @token = {{login.response.body.$.token}}
@@ -28,9 +28,11 @@ Authorization: Bearer {{token}}
 
 ### Get All Users
 GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
 
 ### Get User By ID
 GET {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
 
 ### Create User
 POST {{baseUrl}}/users
@@ -38,9 +40,9 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "User Baru",
+  "username": "User Baru",
   "email": "userbaru@test.com",
-  "password": "password123"
+  "password": "woykocakjir"
 }
 
 ### Update User
@@ -49,16 +51,18 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "Arzif Update",
-  "email": "arzifupdate@test.com",
-  "password": "password123"
+  "username": "alanwalkering Update",
+  "email": "alanwalkeringupdate@test.com",
+  "password": "woykocakjir"
 }
 
 ### Get All Posts
 GET {{baseUrl}}/posts
+Authorization: Bearer {{token}}
 
 ### Get Post By ID
 GET {{baseUrl}}/posts/1
+Authorization: Bearer {{token}}
 
 ### Create Post
 POST {{baseUrl}}/posts
@@ -67,8 +71,7 @@ Content-Type: application/json
 
 {
   "title": "Belajar Go API",
-  "body": "Go sangat cepat dan efisien",
-  "user_id": 1
+  "content": "Go sangat cepat dan efisien"
 }
 
 ### Delete Post
